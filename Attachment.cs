@@ -4,6 +4,12 @@ using UnityEngine;
 
 public class Attachment : MonoBehaviour {
 
+    public enum AttachmentType {
+        Bulldozer,
+        Shovel,
+        Trencher,        
+    }
+
     [SerializeField, TooltipAttribute("アタッチメントの座標")] public Vector2 attachMentPos;   // アタッチメント用座標情報(プレイヤーとの相対座標)   
     // 敵接触判定用タグ
     [SerializeField, TooltipAttribute("攻撃可能な敵のタグ")] public string[] colliderTags = {};

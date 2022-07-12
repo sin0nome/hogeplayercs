@@ -9,18 +9,12 @@ public class Player : MonoBehaviour {
 
     private Attachment attachment;
 
-    enum AttachmentType {
-        Bulldozer,
-        Shovel,
-        Trencher,        
-    } 
-
     private Rigidbody2D rb;         // 
 
     private bool isConnectGamePad = false;  // ゲームパッドが接続されているか
     private bool isJump = false;            // ジャンプ中か
     private int attachmentFlg = 0;          // アタッチメントの状態フラグ
-    private AttachmentType equipmentAttachment; // 現在装備しているアタッチメント
+    private Attachment.AttachmentType equipmentAttachment; // 現在装備しているアタッチメント
     private float preJumpTime = 0;          // ジャンプした瞬間の時間
     private float nowJumpTime = 0;          // 現在の時間
     private Vector2 attachmentMovePosition; // アタッチメントの移動量
@@ -117,7 +111,7 @@ public class Player : MonoBehaviour {
 
         // プレイヤー移動量の取得と反映
         Vector2 addSpeed = gamePad.leftStick.ReadValue() * this.moveSpeed;
-        Vector2 speed = (this.attachmentFlg == (1 << (int)AttachmentType.Trencher)) ? addSpeed / this.TrencherSpeedDown : addSpeed;
+        Vector2 speed = (this.attachmentFlg == (1 << (int)Attachment.AttachmentType.Trencher)) ? addSpeed / this.TrencherSpeedDown : addSpeed;
 
         // 空中での動作
         if(this.isJump){
@@ -157,17 +151,17 @@ public class Player : MonoBehaviour {
 
         // アタッチメントの切り替え
         if(gamePad.dpad.up.isPressed){
-            this.equipmentAttachment = AttachmentType.Shovel;
-            this.attachmentFlg = (1 << (int)AttachmentType.Shovel);
+            this.equipmentAttachment = Attachment.AttachmentType.Shovel;
+            this.attachmentFlg = (1 << (int)Attachment.AttachmentType.Shovel);
         } else if(gamePad.dpad.right.isPressed){
-            this.equipmentAttachment = AttachmentType.Bulldozer;
-            this.attachmentFlg = (1 << (int)AttachmentType.Bulldozer);
+            this.equipmentAttachment = Attachment.AttachmentType.Bulldozer;
+            this.attachmentFlg = (1 << (int)Attachment.AttachmentType.Bulldozer);
         } else if(gamePad.dpad.down.isPressed){
-            this.equipmentAttachment = AttachmentType.Trencher;
-            this.attachmentFlg = (1 << (int)AttachmentType.Trencher);
+            this.equipmentAttachment = Attachment.AttachmentType.Trencher;
+            this.attachmentFlg = (1 << (int)Attachment.AttachmentType.Trencher);
         } else if(gamePad.dpad.left.isPressed){
-            this.equipmentAttachment = AttachmentType.Bulldozer;
-            this.attachmentFlg = (1 << (int)AttachmentType.Bulldozer);            
+            this.equipmentAttachment = Attachment.AttachmentType.Bulldozer;
+            this.attachmentFlg = (1 << (int)Attachment.AttachmentType.Bulldozer);            
         }
 
         // 攻撃処理
@@ -191,7 +185,7 @@ public class Player : MonoBehaviour {
         }
 
         addSpeed *= this.moveSpeed;
-        Vector2 speed = (this.attachmentFlg == (1 << (int)AttachmentType.Trencher)) ? addSpeed / this.TrencherSpeedDown : addSpeed;
+        Vector2 speed = (this.attachmentFlg == (1 << (int)Attachment.AttachmentType.Trencher)) ? addSpeed / this.TrencherSpeedDown : addSpeed;
 
         // アタッチメント移動量の取得
         // プレイヤー移動量の取得と反映
@@ -215,7 +209,6 @@ public class Player : MonoBehaviour {
                 this.rb.velocity = speed;            
             }
         }
-
 
         // ジャンプする場合
         if (Keyboard.current.spaceKey.isPressed) {
@@ -254,11 +247,11 @@ public class Player : MonoBehaviour {
     // 攻撃処理
     private int attack() {
         switch(this.equipmentAttachment){
-            case AttachmentType.Shovel:
+            case Attachment.AttachmentType.Shovel:
                 return this.attachment.ShovelAttack();
-            case AttachmentType.Bulldozer:
+            case Attachment.AttachmentType.Bulldozer:
                 return this.attachment.BulldozerAttack();
-            case AttachmentType.Trencher:
+            case Attachment.AttachmentType.Trencher:
                 return this.attachment.TrencherAttack();
             default:
         return 0;
