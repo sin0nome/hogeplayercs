@@ -31,7 +31,7 @@ public class Player : MonoBehaviour {
     [SerializeField, Range(1.0f, 100.0f), TooltipAttribute("ジャンプの強さ")] public float jumpPowor = 5.0f;    // ジャンプの強さ
     [SerializeField, TooltipAttribute("AddForceで移動及びジャンプするか")] public bool isAddForce = false;       // AddForceで移動及びジャンプするか
     [SerializeField, TooltipAttribute("空中にいる場合重力加速度を有効にするか")] public bool isGravity = true;    // 重力加速度を有効にするか
-    [SerializeField, TooltipAttribute("トレンチャ装備時の移動速度低下の割合(大きいほど遅くなる)")] public float TrencherSpeedDown = 2.0f;  // トレンチャ装備時の移動速度低下の割合(大きいほど遅くなる)
+    [SerializeField, Range(1, 10), TooltipAttribute("トレンチャ装備時の移動速度低下の割合(大きいほど遅くなる)")] public float TrencherSpeedDown = 2.0f;  // トレンチャ装備時の移動速度低下の割合(大きいほど遅くなる)
     [SerializeField, Range(1, 10000), TooltipAttribute("ジャンプキーをms単位でどのくらい押下できるか(値が大きいほど長くジャンプできる)")] private int jumpPushTime = 100;              
 
 
