@@ -14,7 +14,7 @@ public class Player : MonoBehaviour {
     } 
 
     private Rigidbody2D rb;         // 
-    public Vector2 attachMentPos;   // アッタッチメント用座標情報
+    public Vector2 attachMentPos;   // アッタッチメント用座標情報(プレイヤーとの相対座標)
 
     private bool isConnectGamePad = false;  // ゲームパッドが接続されているか
     private bool isJump = false;            // ジャンプ中か
@@ -25,17 +25,15 @@ public class Player : MonoBehaviour {
 
     // 以下デバッガ、プランナ設定用フィールド
     public Vector2 position;                // プレイヤー座標情報
-    public int MaxHP = 10;                  // 最大HP
-    public int CurrntHP = 10;               // 現在HP
-    [SerializeField, Range(1.0f, 100.0f), TooltipAttribute("移動量")] public float moveSpeed = 1.0f;           // 移動量
-    [SerializeField, Range(1.0f, 100.0f), TooltipAttribute("ジャンプの強さ")] public float jumpPowor = 5.0f;    // ジャンプの強さ
-    [SerializeField, TooltipAttribute("AddForceで移動及びジャンプするか")] public bool isAddForce = false;       // AddForceで移動及びジャンプするか
-    [SerializeField, TooltipAttribute("空中にいる場合重力加速度を有効にするか")] public bool isGravity = true;    // 重力加速度を有効にするか
-    [SerializeField, Range(1, 10), TooltipAttribute("トレンチャ装備時の移動速度低下の割合(大きいほど遅くなる)")] public float TrencherSpeedDown = 2.0f;  // トレンチャ装備時の移動速度低下の割合(大きいほど遅くなる)
+    [SerializeField, TooltipAttribute("最大HP")] public GameObject attachmentObj;        // 最大HP
+    [SerializeField, TooltipAttribute("最大HP")] public int MaxHP = 10;                  // 最大HP
+    [SerializeField, TooltipAttribute("現在HP")] public int CurrntHP = 10;               // 現在HP
+    [SerializeField, Range(1.0f, 100.0f), TooltipAttribute("移動量")] private float moveSpeed = 1.0f;           // 移動量
+    [SerializeField, Range(1.0f, 100.0f), TooltipAttribute("ジャンプの強さ")] private float jumpPowor = 5.0f;    // ジャンプの強さ
+    [SerializeField, TooltipAttribute("AddForceで移動及びジャンプするか")] private bool isAddForce = false;       // AddForceで移動及びジャンプするか
+    [SerializeField, TooltipAttribute("空中にいる場合重力加速度を有効にするか")] private bool isGravity = true;    // 重力加速度を有効にするか
+    [SerializeField, Range(1, 10), TooltipAttribute("トレンチャ装備時の移動速度低下の割合(大きいほど遅くなる)")] private float TrencherSpeedDown = 2.0f;  // トレンチャ装備時の移動速度低下の割合(大きいほど遅くなる)
     [SerializeField, Range(1, 10000), TooltipAttribute("ジャンプキーをms単位でどのくらい押下できるか(値が大きいほど長くジャンプできる)")] private int jumpPushTime = 100;              
-
-
-    public KeyCode[] key;                   // キー
 
     // 敵接触判定用タグ
     public string[] colliderTags = {};
@@ -54,6 +52,15 @@ public class Player : MonoBehaviour {
         if (rb == null) {
             Debug.LogError("Rigidbody2Dが設定されていません");
             return;
+        }
+
+        // アタッチメントオブジェクト
+        if(this.attachmentObj == null){
+            this.attachmentObj = GameObject.Find("Attachment");
+            if(this.attachmentObj == null){
+                Debug.LogError("アタッチメントオブジェクトが設定されていません");
+                return;
+            }
         }
 
         // ゲームパッドが接続されているか
