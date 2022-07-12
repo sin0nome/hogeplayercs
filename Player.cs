@@ -16,7 +16,6 @@ public class Player : MonoBehaviour {
     } 
 
     private Rigidbody2D rb;         // 
-    public Vector2 attachMentPos;   // アッタッチメント用座標情報(プレイヤーとの相対座標)
 
     private bool isConnectGamePad = false;  // ゲームパッドが接続されているか
     private bool isJump = false;            // ジャンプ中か
@@ -24,10 +23,12 @@ public class Player : MonoBehaviour {
     private AttachmentType equipmentAttachment; // 現在装備しているアタッチメント
     private float preJumpTime = 0;          // ジャンプした瞬間の時間
     private float nowJumpTime = 0;          // 現在の時間
+    private Vector2 attachmentMovePosition; // アタッチメントの移動量
 
     // 以下デバッガ、プランナ設定用フィールド
     public Vector2 position;                // プレイヤー座標情報
-    [SerializeField, TooltipAttribute("最大HP")] public GameObject attachmentObj;        // 最大HP
+    [SerializeField, TooltipAttribute("アタッチメントの相対位置")] private Vector2 attachmentPosition;           // プレイヤーとアタッチメントの相対位置
+    [SerializeField, TooltipAttribute("アタッチメント用のオブジェクト")] private GameObject attachmentObj;        // アタッチメント用のオブジェクト
     [SerializeField, TooltipAttribute("最大HP")] public int MaxHP = 10;                  // 最大HP
     [SerializeField, TooltipAttribute("現在HP")] public int CurrntHP = 10;               // 現在HP
     [SerializeField, Range(1.0f, 100.0f), TooltipAttribute("移動量")] private float moveSpeed = 1.0f;           // 移動量
@@ -78,12 +79,12 @@ public class Player : MonoBehaviour {
 
     // Update is called once per frame
     void Update() {
-        // 座標情報の更新
-        this.position = this.gameObject.transform.position;
-
         // 入力に応じた行動
         this.controller();
 
+        // 座標情報の更新
+        this.position = this.gameObject.transform.position;
+        this.attachment.attachMentPos =  this.position + this.attachmentPosition + this.attachmentMovePosition;
         //  this.isJump = false;  // デバッグ用
 
         // ジャンプ中処理
@@ -134,7 +135,7 @@ public class Player : MonoBehaviour {
         }
 
         // アタッチメント移動量の取得
-        this.attachMentPos = gamePad.rightStick.ReadValue();
+        this.attachmentMovePosition = gamePad.rightStick.ReadValue();
 
         // 各ボタン押下毎の処理
         // 上ボタン
@@ -191,6 +192,14 @@ public class Player : MonoBehaviour {
 
         addSpeed *= this.moveSpeed;
         Vector2 speed = (this.attachmentFlg == (1 << (int)AttachmentType.Trencher)) ? addSpeed / this.TrencherSpeedDown : addSpeed;
+
+        // アタッチメント移動量の取得
+        // プレイヤー移動量の取得と反映
+        Vector2 addAttachPos = Vector2.zero;
+        if(Keyboard.current.wKey.isPressed){
+            addAttachPos += Vector2.left;
+        }
+        this.attachmentMovePosition = addAttachPos;
 
         // 空中での動作
         if(this.isJump){

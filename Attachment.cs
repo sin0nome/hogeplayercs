@@ -15,7 +15,7 @@ public class Attachment : MonoBehaviour {
 
     // Update is called once per frame
     void Update() {
-        
+        this.gameObject.transform.position = this.attachMentPos;
     }
 
     // 接触判定
