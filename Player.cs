@@ -29,6 +29,7 @@ public class Player : MonoBehaviour {
     public float moveSpeed = 1.0f;          // 移動量
     public float jumpPowor = 1.0f;          // ジャンプの強さ
     public bool isAddForce = false;         // AddForceで移動及びジャンプするか
+    public bool isGravity = true;           // 重力加速度を有効にするか
     public float TrencherSpeedDown = 2.0f;  // トレンチャ装備時の移動速度低下の割合(大きいほど遅くなる)
 
     public KeyCode[] key;                   // キー
@@ -98,10 +99,19 @@ public class Player : MonoBehaviour {
         Vector2 addSpeed = gamePad.leftStick.ReadValue() * this.moveSpeed;
         Vector2 speed = (this.attachmentFlg == (1 << (int)Attachment.Trencher)) ? addSpeed / this.TrencherSpeedDown : addSpeed;
 
-        if(this.isAddForce){
-            this.rb.AddForce(speed);
-        } else {
-            this.rb.velocity = speed;            
+        // 空中での動作
+        if(this.isJump){
+            if(this.isGravity){
+                this.rb.AddForce(speed);                
+            }else{
+                this.rb.velocity = speed;                
+            }
+        }else{
+            if(this.isAddForce){
+                this.rb.AddForce(speed);
+            } else {
+                this.rb.velocity = speed;            
+            }
         }
 
         // アタッチメント移動量の取得
@@ -145,6 +155,40 @@ public class Player : MonoBehaviour {
     }
 
     void keybordControl(){
+        // プレイヤー移動量の取得と反映
+        Vector2 addSpeed = Vector2.zero;
+        if(Keyboard.current.leftArrowKey.isPressed){
+            addSpeed += Vector2.left;
+        }
+        if(Keyboard.current.rightArrowKey.isPressed){
+            addSpeed += Vector2.right;
+        }
+        if(Keyboard.current.upArrowKey.isPressed){
+            addSpeed += Vector2.up;
+        }
+        if(Keyboard.current.downArrowKey.isPressed){
+            addSpeed += Vector2.left;
+        }
+
+        addSpeed *= this.moveSpeed;
+        Vector2 speed = (this.attachmentFlg == (1 << (int)Attachment.Trencher)) ? addSpeed / this.TrencherSpeedDown : addSpeed;
+
+        // 空中での動作
+        if(this.isJump){
+            if(this.isGravity){
+                this.rb.AddForce(speed);                
+            }else{
+                this.rb.velocity = speed;                
+            }
+        }else{
+            if(this.isAddForce){
+                this.rb.AddForce(speed);
+            } else {
+                this.rb.velocity = speed;            
+            }
+        }
+
+
         // ジャンプする場合
         if (Keyboard.current.spaceKey.isPressed) {
             this.jump();
