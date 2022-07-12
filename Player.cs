@@ -20,17 +20,20 @@ public class Player : MonoBehaviour {
     private bool isJump = false;            // ジャンプ中か
     private int attachmentFlg = 0;          // アタッチメントの状態フラグ
     private Attachment equipmentAttachment; // 現在装備しているアタッチメント
-
+    private float preJumpTime = 0;          // ジャンプした瞬間の時間
+    private float nowJumpTime = 0;          // 現在の時間
 
     // 以下デバッガ、プランナ設定用フィールド
     public Vector2 position;                // プレイヤー座標情報
     public int MaxHP = 10;                  // 最大HP
     public int CurrntHP = 10;               // 現在HP
-    public float moveSpeed = 1.0f;          // 移動量
-    public float jumpPowor = 1.0f;          // ジャンプの強さ
-    public bool isAddForce = false;         // AddForceで移動及びジャンプするか
-    public bool isGravity = true;           // 重力加速度を有効にするか
-    public float TrencherSpeedDown = 2.0f;  // トレンチャ装備時の移動速度低下の割合(大きいほど遅くなる)
+    [SerializeField, Range(1.0f, 100.0f), TooltipAttribute("移動量")] public float moveSpeed = 1.0f;           // 移動量
+    [SerializeField, Range(1.0f, 100.0f), TooltipAttribute("ジャンプの強さ")] public float jumpPowor = 5.0f;    // ジャンプの強さ
+    [SerializeField, TooltipAttribute("AddForceで移動及びジャンプするか")] public bool isAddForce = false;       // AddForceで移動及びジャンプするか
+    [SerializeField, TooltipAttribute("空中にいる場合重力加速度を有効にするか")] public bool isGravity = true;    // 重力加速度を有効にするか
+    [SerializeField, TooltipAttribute("トレンチャ装備時の移動速度低下の割合(大きいほど遅くなる)")] public float TrencherSpeedDown = 2.0f;  // トレンチャ装備時の移動速度低下の割合(大きいほど遅くなる)
+    [SerializeField, Range(1, 10000), TooltipAttribute("ジャンプキーをms単位でどのくらい押下できるか(値が大きいほど長くジャンプできる)")] private int jumpPushTime = 100;              
+
 
     public KeyCode[] key;                   // キー
 
@@ -65,7 +68,7 @@ public class Player : MonoBehaviour {
         // 入力に応じた行動
         this.controller();
 
-        this.isJump = false;  // デバッグ用
+        //  this.isJump = false;  // デバッグ用
 
         // ジャンプ中処理
         if(this.isJump) {
@@ -200,8 +203,15 @@ public class Player : MonoBehaviour {
 
     // ジャンプ処理
     void jump(){
-        if(this.isJump){
-            return;
+        this.nowJumpTime = Time.time;
+        float diff = this.nowJumpTime - this.preJumpTime;
+
+        // ジャンプ可能な最大時間より大きいかつ空中の場合はそのままreturn
+        float pushTime = (float)this.jumpPushTime / 1000.0f;
+        if(diff > pushTime){
+            if(this.isJump){
+                return;
+            }
         }
 
         if(this.isAddForce){
@@ -209,7 +219,11 @@ public class Player : MonoBehaviour {
         } else {
             this.rb.velocity = transform.up * jumpPowor;            
         }
-        this.isJump = true;        
+
+        if(!this.isJump){
+            this.isJump = true;
+            this.preJumpTime = Time.time;
+        }
     }
 
     // 攻撃処理
