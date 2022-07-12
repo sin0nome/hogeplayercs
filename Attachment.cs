@@ -27,15 +27,15 @@ public class Attachment : MonoBehaviour {
         }
     }
 
-    int ShovelAttack(){
+    public int ShovelAttack(){
         return 0;
     }
 
-    int BulldozerAttack(){
+    public int BulldozerAttack(){
         return 0;
     }
-    
-    int TrencherAttack(){
+
+    public int TrencherAttack(){
         return 0;
     }    
 
