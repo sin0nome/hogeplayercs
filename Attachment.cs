@@ -10,17 +10,25 @@ public class Attachment : MonoBehaviour {
         Trencher,        
     }
 
+    [SerializeField, TooltipAttribute("プレイヤーオブジェクト")] private GameObject playerObj;        // アタッチメント用のオブジェクト
     [SerializeField, TooltipAttribute("アタッチメントの座標")] public Vector2 attachMentPos;   // アタッチメント用座標情報(プレイヤーとの相対座標)   
+    [SerializeField, TooltipAttribute("攻撃可能な敵のタグ")] public AttachmentType type;
+
     // 敵接触判定用タグ
-    [SerializeField, TooltipAttribute("攻撃可能な敵のタグ")] public string[] colliderTags = {};
+    private string[] colliderTags;
 
     // Start is called before the first frame update
     void Start() {
-        
+
     }
 
     // Update is called once per frame
     void Update() {
+        if(this.playerObj == null){
+            return;
+        }
+
+        // プレイヤーに追従(相対座標で動く)
         this.gameObject.transform.position = this.attachMentPos;
     }
 
@@ -44,5 +52,13 @@ public class Attachment : MonoBehaviour {
     public int TrencherAttack(){
         return 0;
     }    
+
+    public void setPlayer(GameObject obj){
+        this.playerObj = obj;
+    }
+
+    public void setTags(string[] tags){
+        this.colliderTags = tags;
+    }
 
 }

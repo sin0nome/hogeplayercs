@@ -14,6 +14,7 @@ public class Player : MonoBehaviour {
     private bool isConnectGamePad = false;  // ゲームパッドが接続されているか
     private bool isJump = false;            // ジャンプ中か
     private bool isRightFront = true;       // 右を向いているか
+    private bool preRightFront = true;      // 1フレーム前は右を向いていたか
     private int attachmentFlg = 0;          // アタッチメントの状態フラグ
     private float preJumpTime = 0;          // ジャンプした瞬間の時間
     private float nowJumpTime = 0;          // 現在の時間
@@ -35,8 +36,10 @@ public class Player : MonoBehaviour {
     [SerializeField, Range(1, 10000), TooltipAttribute("ジャンプキーをms単位でどのくらい押下できるか(値が大きいほど長くジャンプできる)")] private int jumpPushTime = 100;
 
     // 敵接触判定用タグ
+    [SerializeField, TooltipAttribute("敵接触判定用タグ 敵からの接触ダメージや攻撃の判定を行う")]     
     public string[] colliderTags = {};
     // 地面とみなすタグ
+    [SerializeField, TooltipAttribute("地面とみなすタグ 設定したタグと接触することでジャンプの空中フラグが解除される")]     
     public string[] groundTags = {};
 
     // 以下処理
@@ -71,6 +74,12 @@ public class Player : MonoBehaviour {
 
         // ゲームパッドが接続されているか
         this.isConnectGamePad = (Gamepad.current == null) ? false : true ;
+
+        // アタッチメントへ自身のオブジェクトを渡す
+        this.attachment.setPlayer(this.gameObject);
+        this.attachment.setTags(this.colliderTags);
+
+
     }
 
     // Update is called once per frame
@@ -104,17 +113,30 @@ public class Player : MonoBehaviour {
         }else{
             this.keybordControl();
         }
+
+        // 向きによってアタッチメントの相対座標の正負を変更する
+        if(this.preRightFront != this.isRightFront){
+            this.attachmentMovePosition.x *= -1;
+        }
     }
 
+    /*
+    * ゲームパッド操作する場合のメソッド
+    */
     private void gamePadControl(){
         var gamePad = Gamepad.current;
 
         // プレイヤー移動量の取得と反映
-        Vector2 addSpeed = gamePad.leftStick.ReadValue() * this.moveSpeed;
+        Vector2 playerMove = gamePad.leftStick.ReadValue();
+        Vector2 addSpeed = playerMove * this.moveSpeed;
         Vector2 speed = (this.attachmentFlg == (1 << (int)Attachment.AttachmentType.Trencher)) ? addSpeed / this.TrencherSpeedDown : addSpeed;
 
-        if(){
-            this..isRightFront = false;
+        // 方向の設定
+        this.preRightFront = this.isRightFront;
+        if(playerMove.x < 0){
+            this.isRightFront = false;
+        }else{
+            this.isRightFront = true;
         }
 
         // 空中での動作
@@ -139,7 +161,7 @@ public class Player : MonoBehaviour {
         // 上ボタン
         if(gamePad.buttonNorth.isPressed){
 
-        } 
+        }
         // 右ボタン
         if(gamePad.buttonEast.isPressed){
             this.jump();
@@ -172,21 +194,29 @@ public class Player : MonoBehaviour {
         this.attack();
     }
 
+    /*
+    * キーボード操作する場合のメソッド
+    */
     private void keybordControl(){
         // プレイヤー移動量の取得と反映
         Vector2 addSpeed = Vector2.zero;
+        this.preRightFront = this.isRightFront;
         if(Keyboard.current.leftArrowKey.isPressed){
             addSpeed += Vector2.left;
+            this.isRightFront = false;
         }
         if(Keyboard.current.rightArrowKey.isPressed){
             addSpeed += Vector2.right;
+            this.isRightFront = true;
         }
+        /*
         if(Keyboard.current.upArrowKey.isPressed){
             addSpeed += Vector2.up;
         }
         if(Keyboard.current.downArrowKey.isPressed){
             addSpeed += Vector2.left;
         }
+        */
 
         addSpeed *= this.moveSpeed;
         Vector2 speed = (this.attachmentFlg == (1 << (int)Attachment.AttachmentType.Trencher)) ? addSpeed / this.TrencherSpeedDown : addSpeed;
