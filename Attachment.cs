@@ -28,7 +28,7 @@ public class Attachment : MonoBehaviour {
     private void OnCollisionEnter2D(Collision2D other) {
         foreach(string tag in this.colliderTags){
             if (other.gameObject.CompareTag(tag))  {
-                
+                    
             }
         }
     }

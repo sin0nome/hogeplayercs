@@ -13,11 +13,13 @@ public class Player : MonoBehaviour {
 
     private bool isConnectGamePad = false;  // ゲームパッドが接続されているか
     private bool isJump = false;            // ジャンプ中か
+    private bool isRightFront = true;       // 右を向いているか
     private int attachmentFlg = 0;          // アタッチメントの状態フラグ
-    private Attachment.AttachmentType equipmentAttachment; // 現在装備しているアタッチメント
     private float preJumpTime = 0;          // ジャンプした瞬間の時間
     private float nowJumpTime = 0;          // 現在の時間
     private Vector2 attachmentMovePosition; // アタッチメントの移動量
+    private Attachment.AttachmentType equipmentAttachment; // 現在装備しているアタッチメント
+
 
     // 以下デバッガ、プランナ設定用フィールド
     public Vector2 position;                // プレイヤー座標情報
@@ -30,7 +32,7 @@ public class Player : MonoBehaviour {
     [SerializeField, TooltipAttribute("AddForceで移動及びジャンプするか")] private bool isAddForce = false;       // AddForceで移動及びジャンプするか
     [SerializeField, TooltipAttribute("空中にいる場合重力加速度を有効にするか")] private bool isGravity = true;    // 重力加速度を有効にするか
     [SerializeField, Range(1, 10), TooltipAttribute("トレンチャ装備時の移動速度低下の割合(大きいほど遅くなる)")] private float TrencherSpeedDown = 2.0f;  // トレンチャ装備時の移動速度低下の割合(大きいほど遅くなる)
-    [SerializeField, Range(1, 10000), TooltipAttribute("ジャンプキーをms単位でどのくらい押下できるか(値が大きいほど長くジャンプできる)")] private int jumpPushTime = 100;              
+    [SerializeField, Range(1, 10000), TooltipAttribute("ジャンプキーをms単位でどのくらい押下できるか(値が大きいほど長くジャンプできる)")] private int jumpPushTime = 100;
 
     // 敵接触判定用タグ
     public string[] colliderTags = {};
@@ -79,7 +81,6 @@ public class Player : MonoBehaviour {
         // 座標情報の更新
         this.position = this.gameObject.transform.position;
         this.attachment.attachMentPos =  this.position + this.attachmentPosition + this.attachmentMovePosition;
-        //  this.isJump = false;  // デバッグ用
 
         // ジャンプ中処理
         if(this.isJump) {
@@ -90,7 +91,6 @@ public class Player : MonoBehaviour {
         if (this.CurrntHP <= 0) {
 
         }
-
     }
 
     // 入力に応じた行動処理
@@ -112,6 +112,10 @@ public class Player : MonoBehaviour {
         // プレイヤー移動量の取得と反映
         Vector2 addSpeed = gamePad.leftStick.ReadValue() * this.moveSpeed;
         Vector2 speed = (this.attachmentFlg == (1 << (int)Attachment.AttachmentType.Trencher)) ? addSpeed / this.TrencherSpeedDown : addSpeed;
+
+        if(){
+            this..isRightFront = false;
+        }
 
         // 空中での動作
         if(this.isJump){
@@ -191,8 +195,18 @@ public class Player : MonoBehaviour {
         // プレイヤー移動量の取得と反映
         Vector2 addAttachPos = Vector2.zero;
         if(Keyboard.current.wKey.isPressed){
+            addAttachPos += Vector2.up;
+        }
+        if(Keyboard.current.aKey.isPressed){
             addAttachPos += Vector2.left;
         }
+        if(Keyboard.current.sKey.isPressed){
+            addAttachPos += Vector2.down;
+        }
+        if(Keyboard.current.dKey.isPressed){
+            addAttachPos += Vector2.right;
+        }
+
         this.attachmentMovePosition = addAttachPos;
 
         // 空中での動作
