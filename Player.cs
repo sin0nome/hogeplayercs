@@ -10,6 +10,7 @@ public class Player : MonoBehaviour {
     private Attachment attachment;
 
     private Rigidbody2D rb;         // 
+    private SpriteRenderer spriteRenderer;
 
     private bool isConnectGamePad = false;  // ゲームパッドが接続されているか
     private bool isJump = false;            // ジャンプ中か
@@ -65,6 +66,13 @@ public class Player : MonoBehaviour {
             }
         }
 
+        // spriteRenderer
+        this.spriteRenderer = this.GetComponent<SpriteRenderer>();
+        if(this.spriteRenderer == null){
+            Debug.LogError("SpriteRendererが設定されていません");
+            return;
+        }
+
         // アタッチメント用クラスの取得
         this.attachment = this.attachmentObj.GetComponent<Attachment>();
         if(this.attachment == null){
@@ -103,7 +111,7 @@ public class Player : MonoBehaviour {
     }
 
     // 入力に応じた行動処理
-    private void controller(){
+    private void controller() {
         // ゲームパッドが接続されているか
         this.isConnectGamePad = (Gamepad.current == null) ? false : true;
 
@@ -116,8 +124,13 @@ public class Player : MonoBehaviour {
 
         // 向きによってアタッチメントの相対座標の正負を変更する
         if(this.preRightFront != this.isRightFront){
-            this.attachmentMovePosition.x *= -1;
+            this.attachmentPosition.x *= -1;
         }
+
+        this.spriteRenderer.flipX = !this.isRightFront;
+
+
+
     }
 
     /*
