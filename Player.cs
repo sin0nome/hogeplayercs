@@ -7,7 +7,7 @@ using UnityEngine.InputSystem;
 
 public class Player : MonoBehaviour {
 
-    private Attachment attachment;
+    private Attachment attachmentScript;
 
     private Rigidbody2D rb;         // 
     private SpriteRenderer spriteRenderer;
@@ -20,8 +20,9 @@ public class Player : MonoBehaviour {
     private float preJumpTime = 0;          // ジャンプした瞬間の時間
     private float nowJumpTime = 0;          // 現在の時間
     private Vector2 attachmentMovePosition; // アタッチメントの移動量
-    private Attachment.AttachmentType equipmentAttachment; // 現在装備しているアタッチメント
 
+    //[System.NonSerialized] 
+    public Attachment.AttachmentType equipmentAttachment; // 現在装備しているアタッチメント
 
     // 以下デバッガ、プランナ設定用フィールド
     public Vector2 position;                // プレイヤー座標情報
@@ -32,9 +33,10 @@ public class Player : MonoBehaviour {
     [SerializeField, Range(1.0f, 100.0f), TooltipAttribute("移動量")] private float moveSpeed = 1.0f;           // 移動量
     [SerializeField, Range(1.0f, 100.0f), TooltipAttribute("ジャンプの強さ")] private float jumpPowor = 5.0f;    // ジャンプの強さ
     [SerializeField, TooltipAttribute("AddForceで移動及びジャンプするか")] private bool isAddForce = false;       // AddForceで移動及びジャンプするか
-    [SerializeField, TooltipAttribute("空中にいる場合重力加速度を有効にするか")] private bool isGravity = true;    // 重力加速度を有効にするか
-    [SerializeField, Range(1, 10), TooltipAttribute("トレンチャ装備時の移動速度低下の割合(大きいほど遅くなる)")] private float TrencherSpeedDown = 2.0f;  // トレンチャ装備時の移動速度低下の割合(大きいほど遅くなる)
+    [SerializeField, Range(1.0f, 10.0f), TooltipAttribute("トレンチャ装備時の移動速度低下の割合(大きいほど遅くなる)")] private float TrencherSpeedDown = 2.0f;  // トレンチャ装備時の移動速度低下の割合(大きいほど遅くなる)
     [SerializeField, Range(1, 10000), TooltipAttribute("ジャンプキーをms単位でどのくらい押下できるか(値が大きいほど長くジャンプできる)")] private int jumpPushTime = 100;
+    [SerializeField, Range(1.0f, 10.0f), TooltipAttribute("落下時の移動速度の制限(値が大きいほど制限が強い)")] private float jumpMoveRestriction = 2.0f;
+
 
     // 敵接触判定用タグ
     [SerializeField, TooltipAttribute("敵接触判定用タグ 敵からの接触ダメージや攻撃の判定を行う")]     
@@ -74,8 +76,8 @@ public class Player : MonoBehaviour {
         }
 
         // アタッチメント用クラスの取得
-        this.attachment = this.attachmentObj.GetComponent<Attachment>();
-        if(this.attachment == null){
+        this.attachmentScript = this.attachmentObj.GetComponent<Attachment>();
+        if(this.attachmentScript == null){
             Debug.LogError("アタッチメントのスクリプが設定されていません");            
             return;
         }
@@ -84,8 +86,8 @@ public class Player : MonoBehaviour {
         this.isConnectGamePad = (Gamepad.current == null) ? false : true ;
 
         // アタッチメントへ自身のオブジェクトを渡す
-        this.attachment.setPlayer(this.gameObject);
-        this.attachment.setTags(this.colliderTags);
+        this.attachmentScript.setPlayer(this.gameObject);
+        this.attachmentScript.setTags(this.colliderTags);
 
 
     }
@@ -97,18 +99,33 @@ public class Player : MonoBehaviour {
 
         // 座標情報の更新
         this.position = this.gameObject.transform.position;
-        this.attachment.attachMentPos =  this.position + this.attachmentPosition + this.attachmentMovePosition;
+        this.attachmentScript.setAttachMentPos(this.position + this.attachmentPosition + this.attachmentMovePosition);
 
-        // ジャンプ中処理
-        if(this.isJump) {
+        // 向き(画像)の設定
+        this.spriteRenderer.flipX = !this.isRightFront;
 
-        }
+        // アタッチメントの方向設定
+        this.attachmentScript.setIsRightFront(this.isRightFront);
 
         // HP判定
         if (this.CurrntHP <= 0) {
 
         }
     }
+
+    // 接触判定
+    private void OnCollisionEnter2D(Collision2D other) {
+        foreach(string tag in this.groundTags){
+            if (other.gameObject.CompareTag(tag))  {
+                this.isJump = false;
+            }
+        }
+        foreach(string tag in this.colliderTags){
+            if (other.gameObject.CompareTag(tag))  {
+                
+            }
+        }
+    }    
 
     // 入力に応じた行動処理
     private void controller() {
@@ -126,11 +143,6 @@ public class Player : MonoBehaviour {
         if(this.preRightFront != this.isRightFront){
             this.attachmentPosition.x *= -1;
         }
-
-        this.spriteRenderer.flipX = !this.isRightFront;
-
-
-
     }
 
     /*
@@ -140,31 +152,18 @@ public class Player : MonoBehaviour {
         var gamePad = Gamepad.current;
 
         // プレイヤー移動量の取得と反映
-        Vector2 playerMove = gamePad.leftStick.ReadValue();
-        Vector2 addSpeed = playerMove * this.moveSpeed;
-        Vector2 speed = (this.attachmentFlg == (1 << (int)Attachment.AttachmentType.Trencher)) ? addSpeed / this.TrencherSpeedDown : addSpeed;
+        Vector2 playerMoveVal = gamePad.leftStick.ReadValue();
+        playerMoveVal.y = 0; // cs,C++でいう`Vector2 addSpeed = Vector2(playerMove.x * this.moveSpeed, 0);`みたいな書き方わかんね…
+
+        // 移動処理
+        this.playerMove(playerMoveVal);
 
         // 方向の設定
         this.preRightFront = this.isRightFront;
-        if(playerMove.x < 0){
+        if(playerMoveVal.x < 0){
             this.isRightFront = false;
         }else{
             this.isRightFront = true;
-        }
-
-        // 空中での動作
-        if(this.isJump){
-            if(this.isGravity){
-                this.rb.AddForce(speed);                
-            }else{
-                this.rb.velocity = speed;                
-            }
-        }else{
-            if(this.isAddForce){
-                this.rb.AddForce(speed);
-            } else {
-                this.rb.velocity = speed;            
-            }
         }
 
         // アタッチメント移動量の取得
@@ -231,8 +230,8 @@ public class Player : MonoBehaviour {
         }
         */
 
-        addSpeed *= this.moveSpeed;
-        Vector2 speed = (this.attachmentFlg == (1 << (int)Attachment.AttachmentType.Trencher)) ? addSpeed / this.TrencherSpeedDown : addSpeed;
+        // 移動処理
+        this.playerMove(addSpeed);
 
         // アタッチメント移動量の取得
         // プレイヤー移動量の取得と反映
@@ -251,21 +250,6 @@ public class Player : MonoBehaviour {
         }
 
         this.attachmentMovePosition = addAttachPos;
-
-        // 空中での動作
-        if(this.isJump){
-            if(this.isGravity){
-                this.rb.AddForce(speed);                
-            }else{
-                this.rb.velocity = speed;                
-            }
-        }else{
-            if(this.isAddForce){
-                this.rb.AddForce(speed);
-            } else {
-                this.rb.velocity = speed;            
-            }
-        }
 
         // ジャンプする場合
         if (Keyboard.current.spaceKey.isPressed) {
@@ -301,31 +285,41 @@ public class Player : MonoBehaviour {
         }
     }
 
+    // 移動処理
+    private void playerMove(Vector2 addSpeed){
+        addSpeed *= this.moveSpeed;
+        Vector2 speed = (this.attachmentFlg == (1 << (int)Attachment.AttachmentType.Trencher)) ? addSpeed / this.TrencherSpeedDown : addSpeed;
+        speed = this.isJump ? speed /  this.jumpMoveRestriction : speed;
+
+        // 空中での動作
+        if(this.isJump){
+            Vector2 gravity = speed;    // 重力用
+            Vector2 air = speed;        // 空中移動用
+
+            gravity.x = 0;
+            air.y = 0;
+            this.rb.AddForce(gravity);
+            this.rb.velocity = speed;
+        }else{
+            if(this.isAddForce){
+                this.rb.AddForce(speed);
+            } else {
+                this.rb.velocity = speed;            
+            }
+        }
+    }
+
     // 攻撃処理
     private int attack() {
         switch(this.equipmentAttachment){
             case Attachment.AttachmentType.Shovel:
-                return this.attachment.ShovelAttack();
+                return this.attachmentScript.ShovelAttack();
             case Attachment.AttachmentType.Bulldozer:
-                return this.attachment.BulldozerAttack();
+                return this.attachmentScript.BulldozerAttack();
             case Attachment.AttachmentType.Trencher:
-                return this.attachment.TrencherAttack();
+                return this.attachmentScript.TrencherAttack();
             default:
-        return 0;
-        }
-    }
-
-    // 接触判定
-    private void OnCollisionEnter2D(Collision2D other) {
-        foreach(string tag in this.groundTags){
-            if (other.gameObject.CompareTag(tag))  {
-                this.isJump = false;
-            }
-        }
-        foreach(string tag in this.colliderTags){
-            if (other.gameObject.CompareTag(tag))  {
-                
-            }
+                return 0;
         }
     }
 
